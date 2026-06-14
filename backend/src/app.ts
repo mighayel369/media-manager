@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import morgan from 'morgan'
 import logger from './config/logger/index.js';
 import userRouter from '../../backend/src/routes/user.routes.js'
+import { errorHandler } from './middleware/errorm.handler.middleware.js';
 const app: Application = express()
 
 app.use(cors({
@@ -24,6 +25,8 @@ app.use(express.urlencoded({ extended: true }));
 app.set("query parser", "extended");
 
 
-app.use('user', userRouter)
+app.use('/', userRouter)
+
+app.use(errorHandler)
 
 export default app

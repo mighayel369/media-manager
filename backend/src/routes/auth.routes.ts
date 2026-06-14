@@ -12,12 +12,8 @@ const router = express.Router();
 
 const passwordService = new BcryptPasswordService();
 const tokenService = new JwtTokenService();
-
-
 const userRepo = new mongooseUserRepository();
-
 const authService = new AuthService(userRepo, passwordService, tokenService);
-
 const authController = new AuthController(authService);
 
 router.post("/register", validateRequest(registerSchema), authController.registerAccount);
