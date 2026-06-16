@@ -10,7 +10,6 @@ export const LoginPage: React.FC = () => {
     const [formData, setFormData] = useState({ email: "", password: "" });
     const [loading, setLoading] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormError(null);
         setFormData((prev) => ({
@@ -26,10 +25,16 @@ export const LoginPage: React.FC = () => {
 
         try {
             const response = await AuthService.login(formData);
+            console.log(response)
             localStorage.setItem("accessToken", response.token)
-            navigate("/gallery");
-        } catch (error: any) {
-            const serverMessage = error.response?.data?.message || "Invalid email or password.";
+            localStorage.setItem('user', JSON.stringify(response.user));
+            navigate("/");
+        } catch (error: unknown) {
+            const serverMessage =
+                error instanceof Error
+                    ? error.message
+                    : "Registration failed. Please try again.";
+
             setFormError(serverMessage);
         } finally {
             setLoading(false);

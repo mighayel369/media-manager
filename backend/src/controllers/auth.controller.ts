@@ -3,7 +3,7 @@ import { IAuthService } from "../services/interfaces/auth-service.interface.js";
 import { RegisterRequest } from "../validators/auth/register.validator.js";
 import { loginRequest } from "../validators/auth/login.validator.js";
 import { HttpStatus } from "../constants/http_constants.js";
-
+import { AUTH_MESSAGES } from "../constants/success.messages.js";
 export class AuthController {
     constructor(private readonly _authService: IAuthService) { }
 
@@ -19,7 +19,7 @@ export class AuthController {
 
             res.status(HttpStatus.CREATED).json({
                 success: true,
-                message: "Account created successfully",
+                message: AUTH_MESSAGES.ACCOUNT_CREATED,
                 data: result
             });
 
@@ -36,8 +36,8 @@ export class AuthController {
 
             res.status(HttpStatus.OK).json({
                 success: true,
-                message: "Login successful",
-                data: result
+                message: AUTH_MESSAGES.LOGIN_SUCCESS,
+                ...result
             });
         } catch (error) {
             next(error);

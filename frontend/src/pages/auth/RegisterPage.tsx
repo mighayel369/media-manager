@@ -37,8 +37,12 @@ export const RegisterPage: React.FC = () => {
                 navigate("/login");
             }
 
-        } catch (error: any) {
-            const serverMessage = error.response?.data?.message || "Registration failed. Please try again.";
+        } catch (error: unknown) {
+            const serverMessage =
+                error instanceof Error
+                    ? error.message
+                    : "Registration failed. Please try again.";
+
             setFormError(serverMessage);
         } finally {
             setLoading(false);

@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet, Link } from "react-router-dom";
-import { MdCastConnected } from "react-icons/md";
+import { Image } from "lucide-react";
 
 export const AuthLayout: React.FC = () => {
     return (
@@ -17,7 +17,7 @@ export const AuthLayout: React.FC = () => {
 
 
                     <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-purple-600 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/20 group-hover:scale-105 transition-transform">
-                        <MdCastConnected size={22} className="text-white" />
+                        <Image size={22} className="text-white" />
                     </div>
 
                     <span className="text-xl font-black tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
