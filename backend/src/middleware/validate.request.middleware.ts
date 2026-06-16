@@ -2,6 +2,8 @@ import { ZodType } from "zod";
 import { HttpStatus } from "../constants/http_constants.js";
 import { Request, Response, NextFunction } from "express";
 import logger from "../config/logger/index.js";
+import { LOG_MESSAGES } from "../constants/log.messages.js";
+import { ERROR_MESSAGES } from "../constants/error.messages.js";
 
 type RequestSchema = ZodType<{
     body?: unknown;
@@ -21,11 +23,11 @@ export const validateRequest = (schema: RequestSchema) => {
             if (!validatedData.success) {
                 const errorMessages = validatedData.error.issues.map(issue => issue.message);
 
-                logger.debug('Validation Error', { errors: errorMessages });
+                logger.debug(LOG_MESSAGES.VALIDATION_ERROR, { errors: errorMessages });
 
                 res.status(HttpStatus.BAD_REQUEST).json({
                     success: false,
-                    message: errorMessages[0] || "Validation failed"
+                    message: errorMessages[0] ||ERROR_MESSAGES.VALIDATION_FAILED
                 });
                 return;
             }

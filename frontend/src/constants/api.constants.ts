@@ -2,13 +2,13 @@
 export const API_ROUTES = {
     AUTH: {
         REGISTER: '/auth/register',
-        LOGIN: '/auth/login',
-        LOGOUT: '/user/logout',
+        LOGIN: '/auth/login'
     },
     PHOTOS: {
-        GET_ALL: '/photos',
-        UPLOAD: '/photos/upload',
-        UPDATE: (id: string) => `/photos/${id}`,
-        DELETE: (id: string) => `/photos/${id}`,
+        GET_ALL: '/image',
+        UPLOAD: '/image',
+        UPDATE: (imageId: string) => `/image/${imageId}`,
+        DELETE: (imageId: string) => `/image/${imageId}`,
+        REORDER:'/image/reorder'
     }
 } as const

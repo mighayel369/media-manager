@@ -6,7 +6,7 @@ import { IUserDTO, IRegisterPayload, IUserLoginRecord } from "../interfaces/user
 export class mongooseUserRepository implements IUserRepository {
 
     async createAccount(payload: IRegisterPayload): Promise<IUserDTO> {
-        console.log(payload)
+
         const rawUser: IUser = await User.create({
             name: payload.name,
             email: payload.email,

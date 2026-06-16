@@ -2,17 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import jwt from 'jsonwebtoken';
 import logger from "../config/logger/index.js";
 import { HttpStatus } from "../constants/http_constants.js";
+import { AUTH_MESSAGES } from "../constants/success.messages.js";
+import { LOG_MESSAGES } from "../constants/log.messages.js";
 
-declare global {
-    namespace Express {
-        interface Request {
-            user?: {
-                userId: string;
-                email: string;
-            };
-        }
-    }
-}
 
 export const authMiddleware = () => {
     return (req: Request, res: Response, next: NextFunction): void => {
@@ -20,7 +12,7 @@ export const authMiddleware = () => {
         const token = authHeader?.split(' ')[1];
 
         if (!token) {
-            res.status(HttpStatus.UNAUTHORIZED).json({ message: "unauthorized user" });
+            res.status(HttpStatus.UNAUTHORIZED).json({ message: AUTH_MESSAGES.UNAUTHORIZED});
             return;
         }
 
@@ -36,7 +28,7 @@ export const authMiddleware = () => {
 
             next();
         } catch (err) {
-            logger.warn("Token verification failed:", err instanceof Error ? err.message : "Unknown");
+            logger.warn(LOG_MESSAGES.TOKEN_VERIFICATION_FAILED, err instanceof Error ? err.message : "Unknown");
             res.status(HttpStatus.UNAUTHORIZED).json({ success: false, message: "unauthorized user" });
         }
     };
