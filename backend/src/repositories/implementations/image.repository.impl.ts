@@ -3,19 +3,27 @@ import { IImageRepository } from "../interfaces/image-repository.interface.js";
 import { ImageData } from "../interfaces/image.interface.js";
 
 export class ImageRepository implements IImageRepository {
-    async addImage(userId: string, title: string, imageUrl: string): Promise<ImageData> {
-        const lastImageData = await image.findOne().sort("-position").exec();
-        const nextPosition = lastImageData ? lastImageData.position + 1 : 0;
+    async addImages(userId: string, images: { title: string; imageUrl: string; }[]): Promise<ImageData[]> {
 
-        const newImage = new image({ userId, title, imageUrl, position: nextPosition });
-        const savedDoc = await newImage.save();
+        const lastImage = await image.findOne().sort("-position").exec();
 
-        return {
-            imageId: (savedDoc._id).toString(),
-            title: savedDoc.title,
-            imageUrl: savedDoc.imageUrl,
-            position: savedDoc.position
-        };
+        let nextPosition = lastImage ? lastImage.position + 1 : 0;
+
+        const docs = images.map(img => ({
+            userId,
+            title: img.title,
+            imageUrl: img.imageUrl,
+            position: nextPosition++
+        }));
+
+        const savedDocs = await image.insertMany(docs);
+
+        return savedDocs.map(doc => ({
+            imageId: doc._id.toString(),
+            title: doc.title,
+            imageUrl: doc.imageUrl,
+            position: doc.position
+        }));
     }
 
     async updateImage(imageId: string, updateData: Partial<Omit<ImageData, "imageId">>): Promise<ImageData | null> {
@@ -41,15 +49,31 @@ export class ImageRepository implements IImageRepository {
         await image.updateMany({ position: { $gt: deletedPosition }, userId: imageDoc.userId }, { $inc: { position: -1 } })
         return true
     }
+    async getAllImages(userId: string, currentPage: number, limit: number): Promise<{ images: ImageData[]; total: number; }> {
+        const skip = (currentPage - 1) * limit;
 
-    async getAllImages(userId: string): Promise<ImageData[]> {
-        const docs = await image.find({ userId }).sort("position").exec();
-        return docs.map(doc => ({
-            imageId: (doc._id).toString(),
+        const [docs, total] = await Promise.all([
+            image
+                .find({ userId })
+                .sort({ position: 1 })
+                .skip(skip)
+                .limit(limit)
+                .exec(),
+
+            image.countDocuments({ userId })
+        ]);
+
+        const images = docs.map(doc => ({
+            imageId: doc._id.toString(),
             title: doc.title,
             imageUrl: doc.imageUrl,
             position: doc.position
         }));
+
+        return {
+            images,
+            total
+        };
     }
 
     async updatePositions(reorderedItems: { imageId: string; position: number; }[]): Promise<void> {

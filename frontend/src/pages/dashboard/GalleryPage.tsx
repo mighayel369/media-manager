@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { LuPlus } from "react-icons/lu";
 import { PhotoCard } from "../../features/photos/components/PhotoCard";
 import { AddImage } from "../../features/photos/components/AddImage";
@@ -25,38 +25,93 @@ export const GalleryPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [modalOpen, setModalOpen] = useState(false)
     const [selectedImage, setSelectedImage] = useState<ImageData | null>(null)
-    const fetchImage = async () => {
+    const [page, setPage] = useState(1);
+
+    const [loadingMore, setLoadingMore] = useState(false);
+
+    const [hasMore, setHasMore] = useState(true);
+    const bottomRef = useRef<HTMLDivElement | null>(null);
+    const fetchImages = async (
+        pageNumber: number,
+        append = false
+    ) => {
         try {
-            setLoading(true);
+            const res = await PhotoService.getAllImages(
+                pageNumber,
+                8
+            );
 
-            const res = await PhotoService.getAllImages();
+            if (append) {
+                setImages(prev => [
+                    ...prev,
+                    ...res.data
+                ]);
+            } else {
+                setImages(res.data);
+            }
 
-            setImages(res.data || []);
+            setHasMore(res.hasMore);
         } catch (error) {
-            console.log(error)
-            setImages([]);
-        } finally {
-            setLoading(false);
+            console.log(error);
         }
     };
 
     useEffect(() => {
-        fetchImage();
+        setLoading(true);
+
+        fetchImages(1).finally(() =>
+            setLoading(false)
+        );
     }, []);
+    useEffect(() => {
+        if (!bottomRef.current) return;
+
+        const observer = new IntersectionObserver(
+            async (entries) => {
+                const first = entries[0];
+
+                if (
+                    first.isIntersecting &&
+                    hasMore &&
+                    !loadingMore
+                ) {
+                    setLoadingMore(true);
+
+                    const nextPage = page + 1;
+
+                    await fetchImages(nextPage, true);
+
+                    setPage(nextPage);
+
+                    setLoadingMore(false);
+                }
+            }
+        );
+
+        observer.observe(bottomRef.current);
+
+        return () => observer.disconnect();
+    }, [images]);
 
     const uploadNewImage = async (
-        title: string,
-        file: File
+        images: { title: string; file: File }[]
     ) => {
-        const formData = new FormData();
+        try {
+            const formData = new FormData();
 
-        formData.append("title", title);
-        formData.append("imageFile", file);
+            images.forEach((image) => {
+                formData.append("titles", image.title);
+                formData.append("imageFiles", image.file);
+            });
 
-        const res = await PhotoService.uploadImage(formData);
+            const res = await PhotoService.uploadImages(formData);
 
-        if (res.data) {
-            setImages((prev) => [...prev, res.data]);
+            if (res.success) {
+                setPage(1);
+                fetchImages(1);
+            }
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -97,16 +152,19 @@ export const GalleryPage: React.FC = () => {
 
     const handleDeleteClick = async (imageId: string) => {
         try {
-            const response = await PhotoService.deletImage(imageId)
+            const response = await PhotoService.deletImage(imageId);
+
             if (response.success) {
-                fetchImage()
+                setImages(prev =>
+                    prev.filter(img => img.imageId !== imageId)
+                );
             }
         } catch (err) {
-            console.log(err)
+            console.log(err);
         } finally {
-            setModalOpen(false)
+            setModalOpen(false);
+            setSelectedImage(null);
         }
-
     };
 
     const handleDragEnd = async (event: DragEndEvent) => {
@@ -207,6 +265,14 @@ export const GalleryPage: React.FC = () => {
                                     }}
                                 />
                             ))}
+                        </div>
+                        <div ref={bottomRef} className="h-20 flex justify-center items-center">
+                            {loadingMore && (
+                                <div className="relative w-8 h-8">
+                                    <div className="absolute inset-0 rounded-full border-4 border-slate-800" />
+                                    <div className="absolute inset-0 rounded-full border-4 border-t-emerald-400 border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+                                </div>
+                            )}
                         </div>
                     </SortableContext>
                 </DndContext>

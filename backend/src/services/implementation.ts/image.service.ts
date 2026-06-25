@@ -1,4 +1,4 @@
-import { IImageService, ISaveImagePayload, IUpdateImagePayload } from "../interfaces/image-service.interface.js";
+import { IImageService, IUpdateImagePayload } from "../interfaces/image-service.interface.js";
 import { AppError } from "../../errors/AppError.js";
 import { ImageData } from "../../repositories/interfaces/image.interface.js";
 import { IImageRepository } from "../../repositories/interfaces/image-repository.interface.js";
@@ -12,10 +12,25 @@ export class ImageService implements IImageService {
         private readonly _uploadImage: IUploadImage
     ) { }
 
-    async addImage(userId: string, payload: ISaveImagePayload): Promise<ImageData> {
-        const { imageFile, title } = payload;
-        const imageUrl = await this._uploadImage.uploadImage(imageFile);
-        return await this._imageRepository.addImage(userId, title, imageUrl);
+    async addImages(userId: string, files: Express.Multer.File[], titles: string[]): Promise<ImageData[]> {
+        console.log(files)
+        const imageUrls = await Promise.all(
+            files.map(file =>
+                this._uploadImage.uploadImage(file)
+            )
+        );
+
+        const images = imageUrls.map(
+            (imageUrl, index) => ({
+                title: titles[index],
+                imageUrl
+            })
+        );
+
+        return await this._imageRepository.addImages(
+            userId,
+            images
+        );
     }
 
     async updateImage(imageId: string, updatePayload: IUpdateImagePayload): Promise<ImageData | null> {
@@ -36,8 +51,8 @@ export class ImageService implements IImageService {
         return await this._imageRepository.deleteImage(imageId);
     }
 
-    async getAllImages(userId: string): Promise<ImageData[]> {
-        return await this._imageRepository.getAllImages(userId);
+    async getAllImages(userId: string, currentPage: number, limit: number): Promise<{ images: ImageData[]; total: number }> {
+        return await this._imageRepository.getAllImages(userId, currentPage, limit);
     }
 
     async reorderImage(reorderedItems: IReorderItem[]): Promise<void> {

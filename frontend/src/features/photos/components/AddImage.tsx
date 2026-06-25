@@ -1,55 +1,68 @@
 import React, { useState, useRef } from "react";
 import { LuX, LuCloudUpload } from "react-icons/lu";
 
+import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 interface AddImageProps {
     isOpen: boolean;
     onClose: () => void;
-    onUploadSuccess: (title: string, file: File) => Promise<void>;
+    onUploadSuccess: (data: { title: string, file: File }[]) => Promise<void>;
 }
 
 export const AddImage: React.FC<AddImageProps> = ({ isOpen, onClose, onUploadSuccess }) => {
-    const [title, setTitle] = useState("");
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [images, setImages] = useState<{
+        title: string;
+        file: File;
+        preview: string;
+    }[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const currentImage = images[currentIndex];
     if (!isOpen) return null;
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
+            const files = e.target.files
 
-            if (file.type.startsWith("video/")) {
-                setErrorMessage("Invalid format! Only images are allowed in this gallery.");
-                setSelectedFile(null);
-                return;
-            }
+            // if (file.type.startsWith("video/")) {
+            //     setErrorMessage("Invalid format! Only images are allowed in this gallery.");
+            //     setSelectedFile(null);
+            //     return;
+            // }
 
             setErrorMessage(null);
-            setSelectedFile(file);
+            const newImages = Array.from(files).map(file => ({
+                title: "",
+                file,
+                preview: URL.createObjectURL(file)
+            }));
+            setImages(newImages);
+            setCurrentIndex(0);
         }
     };
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMessage(null);
 
-        if (!title.trim()) {
-            setErrorMessage("Please assign a title for this image.");
-            return;
-        }
-        if (!selectedFile) {
-            setErrorMessage("Please choose an image file to upload.");
+        const hasEmptyTitle = images.some(
+            image => !image.title.trim()
+        );
+
+        if (hasEmptyTitle) {
+            setErrorMessage(
+                "Please assign a title for all images."
+            );
             return;
         }
 
         try {
             setIsSubmitting(true);
-            await onUploadSuccess(title, selectedFile);
+            await onUploadSuccess(images);
 
-            setTitle("");
-            setSelectedFile(null);
+            setImages([])
             onClose();
         } catch (error: unknown) {
             const serverMessage =
@@ -86,9 +99,20 @@ export const AddImage: React.FC<AddImageProps> = ({ isOpen, onClose, onUploadSuc
                         <input
                             type="text"
                             id="title"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="e.g. High Intensity Cardio Layout"
+                            value={currentImage?.title || ""}
+                            onChange={(e) => {
+                                setImages(prev => {
+                                    const updated = [...prev];
+
+                                    updated[currentIndex] = {
+                                        ...updated[currentIndex],
+                                        title: e.target.value
+                                    };
+
+                                    return updated;
+                                });
+                            }}
+                            placeholder="Add Title"
                             className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-sm focus:border-emerald-500 focus:outline-none transition-colors"
                         />
                     </div>
@@ -100,7 +124,7 @@ export const AddImage: React.FC<AddImageProps> = ({ isOpen, onClose, onUploadSuc
 
                         <div
                             onClick={() => fileInputRef.current?.click()}
-                            className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${selectedFile
+                            className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${currentImage
                                 ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-400"
                                 : "border-slate-800 bg-slate-950 hover:border-slate-700 text-slate-400 hover:text-slate-300"
                                 }`}
@@ -110,13 +134,27 @@ export const AddImage: React.FC<AddImageProps> = ({ isOpen, onClose, onUploadSuc
                                 ref={fileInputRef}
                                 onChange={handleFileChange}
                                 accept="image/*"
+                                multiple
                                 className="hidden"
                             />
 
-                            <LuCloudUpload className={`h-8 w-8 mx-auto mb-2 ${selectedFile ? "text-emerald-400" : "text-slate-500"}`} />
-                            <p className="text-xs font-medium">
-                                {selectedFile ? selectedFile.name : "Click to browser directory files"}
-                            </p>
+                            {currentImage ? (
+                                <img
+                                    src={currentImage.preview}
+                                    className="w-full h-60 object-cover rounded-lg"
+                                    alt=""
+                                />
+                            ) : (
+                                <>
+                                    <LuCloudUpload className="h-8 w-8 mx-auto mb-2" />
+                                    <p>Select Images</p>
+                                </>
+                            )}
+                            {images.length > 0 && (
+                                <div className="text-center text-sm text-slate-400">
+                                    Image {currentIndex + 1} of {images.length}
+                                </div>
+                            )}
                             <p className="text-[10px] text-slate-500 mt-1">PNG, JPG, or AVIF format (Max 5MB)</p>
                         </div>
                     </div>
@@ -126,6 +164,24 @@ export const AddImage: React.FC<AddImageProps> = ({ isOpen, onClose, onUploadSuc
                             {errorMessage}
                         </div>
                     )}
+
+                    <div className="flex justify-center items-center gap-2">
+                        <button
+                            disabled={currentIndex === 0}
+                            onClick={() =>
+                                setCurrentIndex(prev => prev - 1)
+                            }>
+                            <FaArrowLeft />
+                        </button>
+                        <button
+                            disabled={currentIndex === images.length - 1}
+                            onClick={() =>
+                                setCurrentIndex(prev => prev + 1)
+                            }
+                        >
+                            <FaArrowRight />
+                        </button>
+                    </div>
 
                     <div className="flex gap-3 justify-end pt-2">
                         <button
