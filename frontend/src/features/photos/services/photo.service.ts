@@ -3,13 +3,18 @@ import { API_ROUTES } from "../../../constants/api.constants"
 const { PHOTOS } = API_ROUTES
 
 export const PhotoService = {
-    getAllImages: async () => {
-        const response = await axiosInstance.get(PHOTOS.GET_ALL);
+    getAllImages: async (page: number, limit: number) => {
+        const response = await axiosInstance.get(PHOTOS.GET_ALL, {
+            params: {
+                currentPage: page,
+                limit
+            }
+        });
         console.log(response)
         return response.data;
     },
 
-    uploadImage: async (payload: FormData) => {
+    uploadImages: async (payload: FormData) => {
         const response = await axiosInstance.post(PHOTOS.UPLOAD, payload, {
             headers: {
                 'Content-Type': 'multipart/form-data'
@@ -33,8 +38,8 @@ export const PhotoService = {
         return response.data;
     },
 
-    deletImage:async(imageId:string)=>{
-        const response=await axiosInstance.delete(PHOTOS.DELETE(imageId))
+    deletImage: async (imageId: string) => {
+        const response = await axiosInstance.delete(PHOTOS.DELETE(imageId))
         return response.data
     }
 }

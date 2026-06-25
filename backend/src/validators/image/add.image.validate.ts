@@ -1,9 +1,11 @@
-import z from 'zod';
+import z from "zod";
 
-export const addImageSchema = z.object({
+export const addImagesSchema = z.object({
     body: z.object({
-        title: z.string("Title is required").min(1, "Title cannot be empty"),
+        titles: z.array(
+            z.string().min(1, "Title cannot be empty")
+        )
     })
 });
 
-export type addImageBody = z.infer<typeof addImageSchema>['body'];
+export type addImageBody = z.infer<typeof addImagesSchema>['body'];

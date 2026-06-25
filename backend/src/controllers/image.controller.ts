@@ -10,25 +10,34 @@ import { IMAGE_MESSAGES } from "../constants/success.messages.js";
 export class ImageController {
     constructor(private readonly _imageService: IImageService) { }
 
-    createImageGallary = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    createImageGallery = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const userId = req.user?.userId as string
-            const imagePayload = req.body;
-            const imageFile = req.file;
+            const userId = req.user?.userId as string;
 
-            if (!imageFile) {
-                throw new AppError(ERROR_MESSAGES.IMAGE_NOT_FOUND, HttpStatus.BAD_REQUEST);
+            const files = req.files as Express.Multer.File[];
+
+            const titles = Array.isArray(req.body.titles)
+                ? req.body.titles
+                : [req.body.titles];
+
+            if (!files.length) {
+                throw new AppError(
+                    ERROR_MESSAGES.IMAGE_NOT_FOUND,
+                    HttpStatus.BAD_REQUEST
+                );
             }
 
-            const newImage = await this._imageService.addImage(userId, {
-                ...imagePayload,
-                imageFile: imageFile
-            });
+            const newImages =
+                await this._imageService.addImages(
+                    userId,
+                    files,
+                    titles
+                );
 
             res.status(HttpStatus.CREATED).json({
                 success: true,
                 message: IMAGE_MESSAGES.UPLOADED,
-                data: newImage
+                data: newImages
             });
         } catch (error) {
             next(error);
@@ -61,18 +70,29 @@ export class ImageController {
         }
     };
 
-    getAllImages = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    getAllImages = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const userId = req.user?.userId as string
-            const images = await this._imageService.getAllImages(userId);
+            const userId = req.user?.userId as string;
+            const currentPage = Number(req.query.currentPage ?? 1);
+            const limit = Number(req.query.limit ?? 8);
+            console.log(req.query)
+            const result = await this._imageService.getAllImages(
+                userId,
+                currentPage,
+                limit
+            );
+
+            const hasMore = currentPage * limit < result.total;
 
             res.status(HttpStatus.OK).json({
                 success: true,
-                results: images.length,
-                data: images
+                data: result.images,
+                total: result.total,
+                currentPage,
+                limit,
+                hasMore
             });
         } catch (error) {
-
             next(error);
         }
     };
