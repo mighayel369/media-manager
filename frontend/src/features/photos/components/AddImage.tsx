@@ -25,12 +25,6 @@ export const AddImage: React.FC<AddImageProps> = ({ isOpen, onClose, onUploadSuc
         if (e.target.files && e.target.files[0]) {
             const files = e.target.files
 
-            // if (file.type.startsWith("video/")) {
-            //     setErrorMessage("Invalid format! Only images are allowed in this gallery.");
-            //     setSelectedFile(null);
-            //     return;
-            // }
-
             setErrorMessage(null);
             const newImages = Array.from(files).map(file => ({
                 title: "",
@@ -41,6 +35,13 @@ export const AddImage: React.FC<AddImageProps> = ({ isOpen, onClose, onUploadSuc
             setCurrentIndex(0);
         }
     };
+
+    const handleCancelButton = (e: React.MouseEvent) => {
+        e.preventDefault()
+
+        setImages([])
+        onClose()
+    }
 
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -186,7 +187,7 @@ export const AddImage: React.FC<AddImageProps> = ({ isOpen, onClose, onUploadSuc
                     <div className="flex gap-3 justify-end pt-2">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={handleCancelButton}
                             disabled={isSubmitting}
                             className="px-4 py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-slate-200 bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer disabled:opacity-50"
                         >
