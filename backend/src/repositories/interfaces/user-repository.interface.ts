@@ -1,8 +1,7 @@
-import { IUserDTO, IRegisterPayload, IUserLoginRecord } from "./user.interface.js";
+import { IUserDTO, IUserLoginRecord, IRegisterPayload } from "./user.interface.js";
 
 export interface IUserRepository {
-
     createAccount(payload: IRegisterPayload): Promise<IUserDTO>;
-
-    findUserByEmail(email: string, includePassword?: boolean): Promise<IUserDTO | IUserLoginRecord | null>;
+    findUserByEmail(email: String): Promise<IUserDTO | null>;
+    findUserWithPassword(email: string): Promise<IUserLoginRecord | null>;
 }

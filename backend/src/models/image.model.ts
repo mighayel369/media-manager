@@ -1,6 +1,6 @@
-import { Schema, Document, model, Types } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
-export interface IImage extends Document {
+export interface IImage {
     userId: Types.ObjectId;
     title: string;
     imageUrl: string;
@@ -9,14 +9,28 @@ export interface IImage extends Document {
 
 const imageSchema = new Schema<IImage>(
     {
-        userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-        title: { type: String, required: true },
-        imageUrl: { type: String, required: true },
-        position: { type: Number, required: true, default: 0 }
+        userId: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true
+        },
+        title: {
+            type: String,
+            required: true
+        },
+        imageUrl: {
+            type: String,
+            required: true
+        },
+        position: {
+            type: Number,
+            required: true,
+            default: 0
+        }
     },
     {
         timestamps: true
     }
 );
 
-export const image = model<IImage>('images', imageSchema);
+export const Image = model<IImage>("Image", imageSchema);

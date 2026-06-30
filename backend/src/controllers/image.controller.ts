@@ -6,26 +6,31 @@ import { reorderImageRequest } from "../validators/image/reorder.image.validate.
 import { imageParams } from "../validators/image/image.param.validate.js";
 import { ERROR_MESSAGES } from "../constants/error.messages.js";
 import { IMAGE_MESSAGES } from "../constants/success.messages.js";
-
+import { ResponseHandler } from "../utility/response.js";
 export class ImageController {
     constructor(private readonly _imageService: IImageService) { }
+
+    private getPagination(query: Request["query"]) {
+        return {
+            currentPage: Number(query.currentPage ?? 1),
+            limit: Number(query.limit ?? 8)
+        };
+    }
+
+    private getUploadPayload(req: Request) {
+        return {
+            files: req.files as Express.Multer.File[],
+            titles: Array.isArray(req.body.titles)
+                ? req.body.titles
+                : [req.body.titles]
+        };
+    }
 
     createImageGallery = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const userId = req.user?.userId as string;
 
-            const files = req.files as Express.Multer.File[];
-
-            const titles = Array.isArray(req.body.titles)
-                ? req.body.titles
-                : [req.body.titles];
-
-            if (!files.length) {
-                throw new AppError(
-                    ERROR_MESSAGES.IMAGE_NOT_FOUND,
-                    HttpStatus.BAD_REQUEST
-                );
-            }
+            const { files, titles } = this.getUploadPayload(req);
 
             const newImages =
                 await this._imageService.addImages(
@@ -34,8 +39,7 @@ export class ImageController {
                     titles
                 );
 
-            res.status(HttpStatus.CREATED).json({
-                success: true,
+            ResponseHandler.success(res, HttpStatus.CREATED, {
                 message: IMAGE_MESSAGES.UPLOADED,
                 data: newImages
             });
@@ -56,12 +60,7 @@ export class ImageController {
 
             });
 
-            if (!updatedImage) {
-                throw new AppError(ERROR_MESSAGES.IMAGE_NOT_FOUND, HttpStatus.NOT_FOUND);
-            }
-
-            res.status(HttpStatus.OK).json({
-                success: true,
+            ResponseHandler.success(res, HttpStatus.OK, {
                 message: IMAGE_MESSAGES.UPDATED,
                 data: updatedImage
             });
@@ -73,8 +72,7 @@ export class ImageController {
     getAllImages = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userId = req.user?.userId as string;
-            const currentPage = Number(req.query.currentPage ?? 1);
-            const limit = Number(req.query.limit ?? 8);
+            const { currentPage, limit } = this.getPagination(req.query);
             console.log(req.query)
             const result = await this._imageService.getAllImages(
                 userId,
@@ -84,8 +82,7 @@ export class ImageController {
 
             const hasMore = currentPage * limit < result.total;
 
-            res.status(HttpStatus.OK).json({
-                success: true,
+            ResponseHandler.success(res, HttpStatus.OK, {
                 data: result.images,
                 total: result.total,
                 currentPage,
@@ -111,8 +108,7 @@ export class ImageController {
                 throw new AppError(ERROR_MESSAGES.IMAGE_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
 
-            res.status(HttpStatus.OK).json({
-                success: true,
+            ResponseHandler.success(res, HttpStatus.OK, {
                 message: IMAGE_MESSAGES.DELETED
             });
         } catch (error) {
@@ -122,12 +118,14 @@ export class ImageController {
 
     reorderImages = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { reorderedItems } = req.body as reorderImageRequest;
+            const { reorderedItems } = req.body;
+            const userId = req.user?.userId as string;
+            await this._imageService.reorderImage(
+                userId,
+                reorderedItems
+            );
 
-            await this._imageService.reorderImage(reorderedItems);
-
-            res.status(HttpStatus.OK).json({
-                success: true,
+            ResponseHandler.success(res, HttpStatus.OK, {
                 message: IMAGE_MESSAGES.REORDERED
             });
         } catch (error) {

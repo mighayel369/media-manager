@@ -5,12 +5,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     error?: string;
 }
 
-export const Input: React.FC<InputProps> = ({
-    label,
-    error,
-    className = "",
-    ...props
-}) => {
+export const Input: React.FC<InputProps> = ({ label, error, className = "", ...props }) => {
     const generatedId = useId();
     const [showPassword, setShowPassword] = React.useState(false);
     return (
@@ -44,13 +39,6 @@ export const Input: React.FC<InputProps> = ({
                         <FaEyeSlash className="w-4 h-4" />
                     )}
                 </button>
-            )}
-
-
-            {error && (
-                <span className="block text-xs font-medium text-red-400 mt-1.5 animate-fade-in">
-                    {error}
-                </span>
             )}
         </div>
     );

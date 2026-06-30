@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Input } from "../../components/Input";
 import { Button } from "../../components/Button";
 import { AuthService } from "../../features/auth/services/auth.service";
-
+import { registerValidation } from "../../validation/auth.validation";
 export const RegisterPage: React.FC = () => {
     const navigate = useNavigate();
 
@@ -27,7 +27,11 @@ export const RegisterPage: React.FC = () => {
     const handleSubmit = async (e: React.SyntheticEvent) => {
         e.preventDefault();
 
-        setFormError(null);
+        const message = registerValidation(formData)
+        if (message) {
+            setFormError(message)
+            return
+        }
         setLoading(true);
 
         try {
@@ -38,10 +42,8 @@ export const RegisterPage: React.FC = () => {
             }
 
         } catch (error: unknown) {
-            const serverMessage =
-                error instanceof Error
-                    ? error.message
-                    : "Registration failed. Please try again.";
+            const serverMessage = typeof error === "object" && error !== null && "message" in error ? String(error.message) : "Registration failed. Please try again.";
+            setFormError(serverMessage);
 
             setFormError(serverMessage);
         } finally {
@@ -67,7 +69,7 @@ export const RegisterPage: React.FC = () => {
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 <Input
                     label="Full Name"
                     type="text"

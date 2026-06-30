@@ -19,5 +19,8 @@ export const ERROR_MESSAGES = {
     CLOUDINARY_EMPTY_RESPONSE: "Cloud storage provider returned an empty response.",
 
     VALIDATION_FAILED: "Validation failed",
-    INVALID_FILE_FORMAT: "Invalid file format. Only images are allowed!"
+    INVALID_FILE_FORMAT: "Invalid file format. Only images are allowed!",
+
+    IMAGE_REQUIRED: "Please upload at least one image.",
+    INVALID_IMAGE_DATA: "Each uploaded image must have a corresponding title."
 } as const;

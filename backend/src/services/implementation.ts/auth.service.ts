@@ -18,7 +18,7 @@ export class AuthService implements IAuthService {
         const { email, password } = payload;
 
 
-        const userRecord = await this._userRepository.findUserByEmail(email, true);
+        const userRecord = await this._userRepository.findUserWithPassword(email);
 
         if (!userRecord || !('passwordHash' in userRecord)) {
             throw new AppError("Invalid email or password", HttpStatus.BAD_REQUEST);

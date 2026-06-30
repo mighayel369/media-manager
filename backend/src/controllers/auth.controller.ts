@@ -4,24 +4,22 @@ import { RegisterRequest } from "../validators/auth/register.validator.js";
 import { loginRequest } from "../validators/auth/login.validator.js";
 import { HttpStatus } from "../constants/http_constants.js";
 import { AUTH_MESSAGES } from "../constants/success.messages.js";
+import { ResponseHandler } from "../utility/response.js";
 export class AuthController {
     constructor(private readonly _authService: IAuthService) { }
 
     registerAccount = async (req: Request<unknown, unknown, RegisterRequest>, res: Response, next: NextFunction) => {
         try {
-            const { email, password, name } = req.body
+            const result = await this._authService.register(req.body);
 
-            const result = await this._authService.register({
-                email,
-                password,
-                name
-            });
-
-            res.status(HttpStatus.CREATED).json({
-                success: true,
-                message: AUTH_MESSAGES.ACCOUNT_CREATED,
-                data: result
-            });
+            ResponseHandler.success(
+                res,
+                HttpStatus.CREATED,
+                {
+                    message: AUTH_MESSAGES.ACCOUNT_CREATED,
+                    ...result
+                }
+            );
 
         } catch (error) {
             next(error);
@@ -30,12 +28,9 @@ export class AuthController {
 
     loginAccount = async (req: Request<unknown, unknown, loginRequest>, res: Response, next: NextFunction) => {
         try {
-            const { email, password } = req.body;
+            const result = await this._authService.login(req.body);
 
-            const result = await this._authService.login({ email, password });
-
-            res.status(HttpStatus.OK).json({
-                success: true,
+            ResponseHandler.success(res, HttpStatus.OK, {
                 message: AUTH_MESSAGES.LOGIN_SUCCESS,
                 ...result
             });

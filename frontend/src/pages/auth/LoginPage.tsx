@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Input } from "../../components/Input";
 import { Button } from "../../components/Button";
 import { AuthService } from "../../features/auth/services/auth.service";
-
+import { loginValidation } from "../../validation/auth.validation";
 export const LoginPage: React.FC = () => {
     const navigate = useNavigate();
 
@@ -20,7 +20,11 @@ export const LoginPage: React.FC = () => {
 
     const handleSubmit = async (e: React.SyntheticEvent) => {
         e.preventDefault();
-        setFormError(null);
+        const message = loginValidation(formData)
+        if (message) {
+            setFormError(message)
+            return
+        }
         setLoading(true);
 
         try {
@@ -30,11 +34,7 @@ export const LoginPage: React.FC = () => {
             localStorage.setItem('user', JSON.stringify(response.user));
             navigate("/");
         } catch (error: unknown) {
-            const serverMessage =
-                error instanceof Error
-                    ? error.message
-                    : "Registration failed. Please try again.";
-
+            const serverMessage = typeof error === "object" && error !== null && "message" in error ? String(error.message) : "Registration failed. Please try again.";
             setFormError(serverMessage);
         } finally {
             setLoading(false);
@@ -60,13 +60,12 @@ export const LoginPage: React.FC = () => {
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <Input
                     label="Email Address"
                     type="email"
                     name="email"
                     placeholder="name@example.com"
-                    required
                     value={formData.email}
                     onChange={handleChange}
                     className="hover:border-slate-700 focus:border-purple-500 transition-colors"
@@ -77,7 +76,6 @@ export const LoginPage: React.FC = () => {
                     type="password"
                     name="password"
                     placeholder="••••••••"
-                    required
                     value={formData.password}
                     onChange={handleChange}
                     className="hover:border-slate-700 focus:border-purple-500 transition-colors"
