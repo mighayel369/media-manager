@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import type { InternalAxiosRequestConfig } from 'axios';
 
 const axiosInstance = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
@@ -20,7 +20,7 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
     (res) => res,
-    (error: AxiosError) => {
+    (error) => {
         const status = error.response?.status
 
         if (status === 401) {
@@ -29,7 +29,19 @@ axiosInstance.interceptors.response.use(
                 window.location.href = '/login';
             }
         }
-        return Promise.reject(error);
+
+
+        if (error.response) {
+            const { status, data } = error.response
+
+            if ([500, 403].includes(status)) {
+                const serverMessage = data?.message || "Internal Server Error";
+                window.location.href = `/error?status=${status}&msg=${encodeURIComponent(serverMessage)}`;
+            }
+
+            const customErrorMessage = data?.message || "An unexpected error occurred.";
+            return Promise.reject({ message: customErrorMessage });
+        }
     }
 )
 

@@ -27,7 +27,7 @@ export const validateRequest = (schema: RequestSchema) => {
 
                 res.status(HttpStatus.BAD_REQUEST).json({
                     success: false,
-                    message: errorMessages[0] ||ERROR_MESSAGES.VALIDATION_FAILED
+                    message: errorMessages[0] || ERROR_MESSAGES.VALIDATION_FAILED
                 });
                 return;
             }

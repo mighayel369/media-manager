@@ -1,9 +1,8 @@
-import { ImageData } from "../interfaces/image.interface.js";
-
+import { ReorderImagePayload, CreateImagePayload, PaginatedImages, UpdateImagePayload, ImageDTO } from "./image.interface.js";
 export interface IImageRepository {
-    addImages(userId: string, images: { title: string; imageUrl: string; }[]): Promise<ImageData[]>;
-    getAllImages(userId: string, currentPage: number, limit: number): Promise<{ images: ImageData[]; total: number; }>;
-    updateImage(imageId: string, updateData: Partial<Omit<ImageData, "imageId">>): Promise<ImageData | null>;
+    addImages(userId: string, images: CreateImagePayload[]): Promise<ImageDTO[]>;
+    getAllImages(userId: string, currentPage: number, limit: number): Promise<PaginatedImages>;
+    updateImage(imageId: string, updateData: UpdateImagePayload): Promise<ImageDTO | null>;
     deleteImage(imageId: string): Promise<boolean>;
-    updatePositions(reorderedItems: { imageId: string; position: number }[]): Promise<void>;
+    updatePositions(userId: string, reorderedItems: ReorderImagePayload[]): Promise<void>;
 }

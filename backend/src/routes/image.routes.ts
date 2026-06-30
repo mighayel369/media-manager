@@ -10,13 +10,14 @@ import { imageSchema } from '../validators/image/image.param.validate.js';
 import { addImagesSchema } from '../validators/image/add.image.validate.js';
 import { updateImageSchema } from '../validators/image/update.image.validate.js';
 import { reorderImageSchema } from '../validators/image/reorder.image.validate.js';
+import { cloudinaryConfig } from '../config/config.env.js';
 
 
 const router = express.Router();
 
 
 const imageRepository = new ImageRepository();
-const imageUploadService = new CloudinaryUploadImageService();
+const imageUploadService = new CloudinaryUploadImageService(cloudinaryConfig);
 const imageService = new ImageService(imageRepository, imageUploadService);
 
 const imageController = new ImageController(imageService);

@@ -34,7 +34,7 @@ export const PhotoService = {
     },
 
     reorderImages: async (reorderedItems: { imageId: string; position: number; }[]) => {
-        const response = await axiosInstance.patch(PHOTOS.REORDER, { reorderedItems });
+        const response = await axiosInstance.patch(PHOTOS.REORDER, { reorderedItems })
         return response.data;
     },
 

@@ -93,9 +93,7 @@ export const GalleryPage: React.FC = () => {
         return () => observer.disconnect();
     }, [images]);
 
-    const uploadNewImage = async (
-        images: { title: string; file: File }[]
-    ) => {
+    const uploadNewImage = async (images: { title: string; file: File }[]) => {
         try {
             const formData = new FormData();
 
@@ -198,7 +196,7 @@ export const GalleryPage: React.FC = () => {
         const changedImages = updatedImages.slice(start, end + 1).map((img) => ({ imageId: img.imageId, position: img.position }));
 
         try {
-            await PhotoService.reorderImages(changedImages);
+            await PhotoService.reorderImages( changedImages);
         } catch (error) {
             console.error("Failed to persist image order", error);
             setImages(previousImages);

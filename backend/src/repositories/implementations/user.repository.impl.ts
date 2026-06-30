@@ -1,48 +1,61 @@
-
+import { HydratedDocument } from "mongoose";
+import { BaseRepository } from "../base/base.repository.js";
 import { User, IUser } from "../../models/user.model.js";
 import { IUserRepository } from "../interfaces/user-repository.interface.js";
-import { IUserDTO, IRegisterPayload, IUserLoginRecord } from "../interfaces/user.interface.js";
+import { IUserDTO, IUserLoginRecord, IRegisterPayload } from "../interfaces/user.interface.js";
 
-export class mongooseUserRepository implements IUserRepository {
+type UserDocument = HydratedDocument<IUser>;
+
+export class MongooseUserRepository extends BaseRepository<IUser, IUserDTO> implements IUserRepository {
+
+    constructor() {
+        super(User);
+    }
+
+    protected toDTO(user: UserDocument): IUserDTO {
+        return {
+            userId: user._id.toString(),
+            name: user.name,
+            email: user.email
+        };
+    }
 
     async createAccount(payload: IRegisterPayload): Promise<IUserDTO> {
 
-        const rawUser: IUser = await User.create({
+        const user = await User.create({
             name: payload.name,
             email: payload.email,
-            password: payload.password,
+            password: payload.password
         });
 
+        return this.toDTO(user);
+    }
+
+    async findUserByEmail(
+        email: string
+    ): Promise<IUserDTO | null> {
+
+        const user = await User.findOne({ email }).exec();
+
+        if (!user) {
+            return null;
+        }
+
+        return this.toDTO(user);
+    }
+
+    async findUserWithPassword(email: string): Promise<IUserLoginRecord | null> {
+
+        const user = await User.findOne({ email }).select("+password").exec();
+
+        if (!user) {
+            return null;
+        }
+
         return {
-            userId: rawUser._id.toString(),
-            name: rawUser.name,
-            email: rawUser.email,
+            ...this.toDTO(user),
+            passwordHash: user.password
         };
     }
 
-    async findUserByEmail(email: string, includePassword = false): Promise<IUserDTO | IUserLoginRecord | null> {
-        let query = User.findOne({ email });
-
-        if (includePassword) {
-            query = query.select("+password");
-        }
-
-        const rawUser = await query;
-        if (!rawUser) return null;
-
-        const baseUser: IUserDTO = {
-            userId: rawUser._id.toString(),
-            name: rawUser.name,
-            email: rawUser.email
-        };
-
-        if (includePassword) {
-            return {
-                ...baseUser,
-                passwordHash: rawUser.password
-            }
-        }
-
-        return baseUser;
-    }
 }

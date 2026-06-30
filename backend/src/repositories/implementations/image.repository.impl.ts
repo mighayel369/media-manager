@@ -1,88 +1,135 @@
-import { image } from "../../models/image.model.js";
+import { HydratedDocument } from "mongoose";
+import { BaseRepository } from "../base/base.repository.js";
+import { Image, IImage } from "../../models/image.model.js";
 import { IImageRepository } from "../interfaces/image-repository.interface.js";
-import { ImageData } from "../interfaces/image.interface.js";
+import { CreateImagePayload, ImageDTO, PaginatedImages, ReorderImagePayload, UpdateImagePayload } from "../interfaces/image.interface.js";
+import mongoose, { Types } from "mongoose";
+type ImageDocument = HydratedDocument<IImage>;
 
-export class ImageRepository implements IImageRepository {
-    async addImages(userId: string, images: { title: string; imageUrl: string; }[]): Promise<ImageData[]> {
+export class ImageRepository extends BaseRepository<IImage, ImageDTO>
+    implements IImageRepository {
 
-        const lastImage = await image.findOne().sort("-position").exec();
+    constructor() {
+        super(Image);
+    }
 
-        let nextPosition = lastImage ? lastImage.position + 1 : 0;
+    protected toDTO(doc: ImageDocument): ImageDTO {
+        return {
+            imageId: doc._id.toString(),
+            title: doc.title,
+            imageUrl: doc.imageUrl,
+            position: doc.position
+        };
+    }
+
+    async addImages(
+        userId: string,
+        images: CreateImagePayload[]
+    ): Promise<ImageDTO[]> {
+
+        const lastImage = await Image
+            .findOne({ userId })
+            .sort({ position: -1 });
+
+        let nextPosition =
+            lastImage ? lastImage.position + 1 : 0;
 
         const docs = images.map(img => ({
-            userId,
+            userId: new Types.ObjectId(userId),
             title: img.title,
             imageUrl: img.imageUrl,
             position: nextPosition++
         }));
 
-        const savedDocs = await image.insertMany(docs);
+        const savedDocs = await Image.insertMany(docs);
 
-        return savedDocs.map(doc => ({
-            imageId: doc._id.toString(),
-            title: doc.title,
-            imageUrl: doc.imageUrl,
-            position: doc.position
-        }));
+        return this.toDTOList(savedDocs);
     }
 
-    async updateImage(imageId: string, updateData: Partial<Omit<ImageData, "imageId">>): Promise<ImageData | null> {
-        const updatedImage = await image.findByIdAndUpdate(imageId, { $set: updateData }, { new: true }).exec();
+    async updateImage(
+        imageId: string,
+        update: UpdateImagePayload
+    ): Promise<ImageDTO | null> {
 
-        if (!updatedImage) return null;
-
-        return {
-            imageId: (updatedImage._id).toString(),
-            title: updatedImage.title,
-            imageUrl: updatedImage.imageUrl,
-            position: updatedImage.position
-        };
+        return this.updateById(imageId, update);
     }
 
     async deleteImage(imageId: string): Promise<boolean> {
-        const imageDoc = await image.findById(imageId);
-        if (!imageDoc) return false
 
-        const deletedPosition = imageDoc.position
-        await image.findByIdAndDelete(imageId);
+        const deletedImage =
+            await Image.findByIdAndDelete(imageId);
 
-        await image.updateMany({ position: { $gt: deletedPosition }, userId: imageDoc.userId }, { $inc: { position: -1 } })
-        return true
+        if (!deletedImage) {
+            return false;
+        }
+
+        await Image.updateMany(
+            {
+                userId: deletedImage.userId,
+                position: { $gt: deletedImage.position }
+            },
+            {
+                $inc: {
+                    position: -1
+                }
+            }
+        );
+
+        return true;
     }
-    async getAllImages(userId: string, currentPage: number, limit: number): Promise<{ images: ImageData[]; total: number; }> {
+
+    async getAllImages(
+        userId: string,
+        currentPage: number,
+        limit: number
+    ): Promise<PaginatedImages> {
+
         const skip = (currentPage - 1) * limit;
 
         const [docs, total] = await Promise.all([
-            image
-                .find({ userId })
+
+            Image.find({ userId })
                 .sort({ position: 1 })
                 .skip(skip)
-                .limit(limit)
-                .exec(),
+                .limit(limit),
 
-            image.countDocuments({ userId })
+            Image.countDocuments({ userId })
+
         ]);
 
-        const images = docs.map(doc => ({
-            imageId: doc._id.toString(),
-            title: doc.title,
-            imageUrl: doc.imageUrl,
-            position: doc.position
-        }));
-
         return {
-            images,
+            images: this.toDTOList(docs),
             total
         };
     }
 
-    async updatePositions(reorderedItems: { imageId: string; position: number; }[]): Promise<void> {
-        const bulkUpdate = reorderedItems.map(item => ({
-            updateOne: {
-                filter: { _id: item.imageId },
-                update: { $set: { position: item.position } }
-            }
-        }));
-        await image.bulkWrite(bulkUpdate);
+    async updatePositions(userId: string, reorderedItems: ReorderImagePayload[]): Promise<void> {
+
+        const session = await mongoose.startSession();
+        try {
+            session.startTransaction();
+            await Image.bulkWrite(
+                reorderedItems.map(item => ({
+                    updateOne: {
+                        filter: {
+                            _id: new Types.ObjectId(item.imageId),
+                            userId: new Types.ObjectId(userId)
+                        },
+                        update: {
+                            $set: {
+                                position: item.position
+                            }
+                        }
+                    }
+                })),
+                { session }
+            );
+            await session.commitTransaction();
+        } catch (error) {
+            await session.abortTransaction();
+            throw error;
+        } finally {
+            session.endSession();
+        }
     }
 }

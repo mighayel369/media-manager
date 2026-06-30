@@ -1,23 +1,16 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Home } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 interface NotFoundProps {
     title?: string;
     description?: string;
     errorCode?: string | number;
-    redirectPath?: string;
-    redirectLabel?: string;
-    showHomeButton?: boolean;
 }
 
-export const NotFound: React.FC<NotFoundProps> = ({
-    title = "Resource Not Found",
+export const NotFound: React.FC<NotFoundProps> = ({ title = "Resource Not Found",
     description = "The asset or page you are trying to access has been moved, removed, or doesn't exist in our registry system.",
     errorCode,
-    redirectPath = "/gallery",
-    redirectLabel = "Dashboard Home",
-    showHomeButton = true
 }) => {
     const navigate = useNavigate();
 
@@ -50,16 +43,6 @@ export const NotFound: React.FC<NotFoundProps> = ({
                         <ArrowLeft className="h-3.5 w-3.5" />
                         <span>Go Back</span>
                     </button>
-
-                    {showHomeButton && (
-                        <button
-                            onClick={() => navigate(redirectPath)}
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-slate-950 text-xs font-bold tracking-wide transition-all cursor-pointer shadow-md shadow-emerald-500/10"
-                        >
-                            <Home className="h-3.5 w-3.5" />
-                            <span>{redirectLabel}</span>
-                        </button>
-                    )}
                 </div>
 
             </div>
