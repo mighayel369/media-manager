@@ -49,7 +49,6 @@ export const AddImage: React.FC<AddImageProps> = ({ isOpen, onClose, onUploadSuc
         setErrorMessage(null);
 
         const validationError = imageValidation(images);
-
         if (validationError) {
             setErrorMessage(validationError);
             return;
