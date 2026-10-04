@@ -1,9 +1,9 @@
 import axiosInstance from "../../../config/axios.config";
-import { type IRegisterPayload, type ILoginPayload } from "../../../types/auth.type";
+import { type IRegisterRequest, type ILoginPayload } from "../../../types/auth.type";
 import { API_ROUTES } from "../../../constants/api.constants";
 const { AUTH } = API_ROUTES
 export const AuthService = {
-    register: async (payload: IRegisterPayload) => {
+    register: async (payload: IRegisterRequest) => {
         const response = await axiosInstance.post(AUTH.REGISTER, payload);
         return response.data;
     },

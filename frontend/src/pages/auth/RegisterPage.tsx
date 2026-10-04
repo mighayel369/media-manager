@@ -11,6 +11,7 @@ export const RegisterPage: React.FC = () => {
         name: "",
         email: "",
         password: "",
+        confirm: ""
     });
     const [loading, setLoading] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
@@ -35,8 +36,8 @@ export const RegisterPage: React.FC = () => {
         setLoading(true);
 
         try {
-
-            const response = await AuthService.register(formData);
+            const { confirm, ...payload } = formData
+            const response = await AuthService.register(payload);
             if (response.success) {
                 navigate("/login");
             }
@@ -97,6 +98,16 @@ export const RegisterPage: React.FC = () => {
                     placeholder="••••••••"
                     required
                     value={formData.password}
+                    onChange={handleChange}
+                />
+
+                <Input
+                    label="Confirm Password"
+                    type="password"
+                    name="confirm"
+                    placeholder="••••••••"
+                    required
+                    value={formData.confirm}
                     onChange={handleChange}
                 />
 

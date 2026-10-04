@@ -19,6 +19,14 @@ export const registerValidation = (payload: IRegisterPayload): string | null => 
         return "Password must be at least 6 characters";
     }
 
+    if (!payload.confirm) {
+        return "Confirm Password is required";
+    }
+
+    if (payload.confirm !== payload.password) {
+        return "Password not matching! try again"
+    }
+
     return null;
 };
 
